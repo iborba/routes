@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express'
 import { Router, Request, Response } from 'express'
 import fetchTourStops from './services/fetchTourStops'; './services/fetchTourStops'
