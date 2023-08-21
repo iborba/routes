@@ -1,8 +1,10 @@
+import 'dotenv/config';
 import { IPosition } from "../interfaces/tourStops.interface";
 import { 
   Client as GoogleMapsClient,
-  LatLng,
-  DistanceMatrixRequest 
+  DistanceMatrixRequest ,
+  DirectionsRequest,
+  PlaceDetailsRequest
 } from '@googlemaps/google-maps-services-js'
 
 export enum EUnit {
@@ -18,6 +20,8 @@ export enum EMode {
   transit = "transit"
 }
 export class TourStops {
+  private apiKey = process.env.API_KEY ?? '';
+  
   fetchLinearDistance(start: IPosition, end: IPosition, unit: EUnit = EUnit.KM) {
     const radLat1 = Math.PI * start.lat / 180;
     const radLat2 = Math.PI * end.lat / 180;
@@ -42,18 +46,59 @@ export class TourStops {
     return dist;
   }
 
-  async fetchDistance(start: IPosition, end: IPosition, mode: EMode = EMode.driving) {
+  async fetchDistance(start: IPosition[], end: IPosition[], mode: EMode = EMode.driving) {
     const maps = new GoogleMapsClient({})
     const req: DistanceMatrixRequest = {
       params: {
-        origins: [{ lat: start.lat, lng: start.lng }],
-        key: 'ANYKEY',
-        destinations: [{ lat: end.lat, lng: end.lng }],
+        key: this.apiKey,
+        origins: start,
+        destinations: end,
         // mode: mode
       }
     }
     const result = await maps.distancematrix(req)
-    console.log(result.data.rows)
-    return result
+    // elements contains the distance from origin to distance singularly
+    return result?.data
+  }
+
+  async fetchDirections(start: IPosition, end: IPosition, stopOver: IPosition[]) {
+    const maps = new GoogleMapsClient({})
+    const req: DirectionsRequest = {
+      params: {
+        key: this.apiKey,
+        origin: start,
+        destination: end,
+        alternatives: true,
+        waypoints: stopOver,
+      }
+    }
+    const result = await maps.directions(req)
+    const { geocoded_waypoints } = result?.data;
+    // const { legs } = result?.data?.routes[0];
+    // console.log(JSON.stringify(result?.data))
+
+    const placesPromises = geocoded_waypoints?.map(waypoint => {
+      const place: PlaceDetailsRequest = {
+        params: {
+          key: this.apiKey,
+          place_id: waypoint.place_id
+        }
+      }
+      return maps.placeDetails(place)
+    })
+
+    const places = await Promise.all(placesPromises)
+    places.map(place => {
+      console.log(place.data)
+    })
+    // console.log(places)
+
+    // const youStartHere = legs[0].start_address
+//     legs?.map(leg => {
+//       
+      
+//     })
+    
+    return 'legs';
   }
 }
