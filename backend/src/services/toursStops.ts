@@ -91,8 +91,13 @@ export class TourStops {
   }
 
   async fetchItineraryOnRange(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
-    const directions = await this.fetchDirections(start, end, stopOver)
-    const response = {}
+    const directions = await this.fetchDirections(start, end, stopOver);
+    const response = {};
+    const checktime = (timeFrom: number, timeTo: number, availableRange: IOpenHours[]) => {
+      console.log(availableRange, timeFrom)
+      return availableRange.find(a => a.from >= timeFrom && a.to <= timeTo)
+    };
+    let isOpen
 
     directions?.map(direction => {
       Object.assign(response, {
@@ -100,20 +105,14 @@ export class TourStops {
         place_id: direction.place_id,
         rating: direction.rating,
         permanently_closed: direction.permanently_closed
-      })
+      });
 
-      const checktime = (timeFrom: number, timeTo: number, availableRange: IOpenHours[]) => {
-        return availableRange.find(a => a.from >= timeFrom && a.to <= timeTo)
-      }
+      isOpen = direction.opening_hours?.periods.find(x => (x.open?.day === weekDay && x.close?.day === weekDay) && 
+        checktime(parseFloat(x.open?.time ?? ''), parseFloat(x.close?.time ?? ''), availableUserRangeTime)
+      )
+    });
 
-      const isOpen = direction.opening_hours?.periods.find(x => {
-      //   const placeOpenTime = parseFloat(x.open?.time ?? '');
-      //   const placeCloseTime = parseFloat(x.close?.time ?? '');
-
-      //   return (x.open?.day === weekDay && x.close?.day === weekDay) && 
-      //   checktime(placeOpenTime, placeCloseTime, availableUserRangeTime)
-      })
-      console.log(response, direction.opening_hours?.periods)
-    })
+    console.log(response, isOpen);
+    return response
   }
 }

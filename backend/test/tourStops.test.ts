@@ -59,12 +59,12 @@ describe('routes file', () => {
     const stopOvers: IPosition[] = [
       { lat: stopOver1[0], lng: stopOver1[1] }, 
       { lat: stopOver2[0], lng: stopOver2[1] }]
-    const availableUserRangeTime: IOpenHours[] = [{from: 9, to: 19},{from: 22, to: 0}]
+    const availableUserRangeTime: IOpenHours[] = [{from: 900, to: 1700}]
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const desiredWeekDay = weekdays.indexOf('Sun');
     const toursStops = new TourStops()
 
-    const response = toursStops.fetchItineraryOnRange(posStart, posEnd, stopOvers, desiredWeekDay, availableUserRangeTime)
+    const response = await toursStops.fetchItineraryOnRange(posStart, posEnd, stopOvers, desiredWeekDay, availableUserRangeTime)
 
     expect(response).toHaveLength(2)
 
