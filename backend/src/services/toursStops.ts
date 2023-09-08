@@ -106,13 +106,13 @@ export class TourStops {
         return availableRange.find(a => a.from >= timeFrom && a.to <= timeTo)
       }
 
-      // const isOpen = direction.opening_hours?.periods.find(x => {
+      const isOpen = direction.opening_hours?.periods.find(x => {
       //   const placeOpenTime = parseFloat(x.open?.time ?? '');
       //   const placeCloseTime = parseFloat(x.close?.time ?? '');
 
       //   return (x.open?.day === weekDay && x.close?.day === weekDay) && 
       //   checktime(placeOpenTime, placeCloseTime, availableUserRangeTime)
-      // })
+      })
       console.log(response, direction.opening_hours?.periods)
     })
   }
