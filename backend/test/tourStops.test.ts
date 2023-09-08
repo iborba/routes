@@ -2,19 +2,21 @@ import { describe, expect, test } from '@jest/globals'
 import {
   TourStops
 } from '../src/services/toursStops'
-import { IPosition } from '../src/interfaces/tourStops.interface'
+import { IOpenHours, IPosition } from '../src/interfaces/tourStops.interface'
 
 describe('routes file', () => {
   let start: [number, number] 
   let end: [number, number] 
   let stopOver1: [number, number] 
   let stopOver2: [number, number] 
+
   beforeAll(() => {
     start = [-29.926422591896756, -51.18272191718709]
     stopOver1 = [-29.919997241552743, -51.177464787626995]
     stopOver2 = [-29.914678113869336, -51.17686397283068]
     end = [-29.918872065155803, -51.1554063005354]
   })
+
   test('gets the linear distance from A to B', () => {
     const start: IPosition = { lat: -29.000, lng: 29.000 }
     const end: IPosition = { lat: -29.999, lng: 29.000 }
@@ -38,7 +40,7 @@ describe('routes file', () => {
     expect(rows[0].elements[0].distance.value).toBeGreaterThan(2500)
   })
 
-  test('gets directions', async () => {
+  test.only('fetch all directions to all points mentioned', async () => {
     const posStart: IPosition = { lat: start[0], lng: start[1] };
     const posEnd: IPosition = { lat: end[0], lng: end[1] };
     const stopOvers: IPosition[] = [
@@ -48,7 +50,23 @@ describe('routes file', () => {
 
     const result = await toursStops.fetchDirections(posStart, posEnd, stopOvers)
 
-    // console.log(result.routes[0].legs[0].steps)
-    // expect(result.geocoded_waypoints[0].types)
+    expect(result).toHaveLength(4)
+  })
+
+  test.only('must ensure opening hours is between a provided time range', async () => {
+    const posStart: IPosition = { lat: start[0], lng: start[1] };
+    const posEnd: IPosition = { lat: end[0], lng: end[1] };
+    const stopOvers: IPosition[] = [
+      { lat: stopOver1[0], lng: stopOver1[1] }, 
+      { lat: stopOver2[0], lng: stopOver2[1] }]
+    const availableUserRangeTime: IOpenHours[] = [{from: 9, to: 19},{from: 22, to: 0}]
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const desiredWeekDay = weekdays.indexOf('Sun');
+    const toursStops = new TourStops()
+
+    const response = toursStops.fetchItineraryOnRange(posStart, posEnd, stopOvers, desiredWeekDay, availableUserRangeTime)
+
+    expect(response).toHaveLength(2)
+
   })
 })

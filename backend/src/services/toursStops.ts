@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { IPosition } from "../interfaces/tourStops.interface";
+import { IOpenHours, IPosition } from "../interfaces/tourStops.interface";
 import { 
   Client as GoogleMapsClient,
   DistanceMatrixRequest ,
@@ -74,31 +74,46 @@ export class TourStops {
     }
     const result = await maps.directions(req)
     const { geocoded_waypoints } = result?.data;
-    // const { legs } = result?.data?.routes[0];
-    // console.log(JSON.stringify(result?.data))
 
-    const placesPromises = geocoded_waypoints?.map(waypoint => {
+    const placesPromises = geocoded_waypoints?.map(async waypoint => {
       const place: PlaceDetailsRequest = {
         params: {
           key: this.apiKey,
           place_id: waypoint.place_id
         }
       }
-      return maps.placeDetails(place)
+      const response = await maps.placeDetails(place)
+
+      return response?.data?.result
     })
 
-    const places = await Promise.all(placesPromises)
-    places.map(place => {
-      console.log(place.data)
-    })
-    // console.log(places)
+    return await Promise.all(placesPromises)
+  }
 
-    // const youStartHere = legs[0].start_address
-//     legs?.map(leg => {
-//       
-      
-//     })
-    
-    return 'legs';
+  async fetchItineraryOnRange(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
+    const directions = await this.fetchDirections(start, end, stopOver)
+    const response = {}
+
+    directions?.map(direction => {
+      Object.assign(response, {
+        business_status: direction.business_status,
+        place_id: direction.place_id,
+        rating: direction.rating,
+        permanently_closed: direction.permanently_closed
+      })
+
+      const checktime = (timeFrom: number, timeTo: number, availableRange: IOpenHours[]) => {
+        return availableRange.find(a => a.from >= timeFrom && a.to <= timeTo)
+      }
+
+      // const isOpen = direction.opening_hours?.periods.find(x => {
+      //   const placeOpenTime = parseFloat(x.open?.time ?? '');
+      //   const placeCloseTime = parseFloat(x.close?.time ?? '');
+
+      //   return (x.open?.day === weekDay && x.close?.day === weekDay) && 
+      //   checktime(placeOpenTime, placeCloseTime, availableUserRangeTime)
+      // })
+      console.log(response, direction.opening_hours?.periods)
+    })
   }
 }
