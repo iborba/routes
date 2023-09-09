@@ -92,27 +92,44 @@ export class TourStops {
 
   async fetchItineraryOnRange(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
     const directions = await this.fetchDirections(start, end, stopOver);
-    const response = {};
-    const checktime = (timeFrom: number, timeTo: number, availableRange: IOpenHours[]) => {
-      console.log(availableRange, timeFrom)
-      return availableRange.find(a => a.from >= timeFrom && a.to <= timeTo)
+    const response: any[] = [];
+    const checktime = (timeFrom: number, timeTo: number, userAvailableTimeRange: IOpenHours[]) => {
+      return userAvailableTimeRange.some(({to}) => timeFrom <= to && to <= timeTo)
     };
-    let isOpen
+    let openOnRangeTime
 
     directions?.map(direction => {
-      Object.assign(response, {
-        business_status: direction.business_status,
-        place_id: direction.place_id,
-        rating: direction.rating,
-        permanently_closed: direction.permanently_closed
-      });
-
-      isOpen = direction.opening_hours?.periods.find(x => (x.open?.day === weekDay && x.close?.day === weekDay) && 
+      openOnRangeTime = direction.opening_hours?.periods.some(x => 
+        (x.open?.day === weekDay && x.close?.day === weekDay) && 
         checktime(parseFloat(x.open?.time ?? ''), parseFloat(x.close?.time ?? ''), availableUserRangeTime)
       )
+      
+      if (openOnRangeTime) {
+        const openNow = direction.opening_hours?.open_now
+        const { 
+          business_status, 
+          international_phone_number, 
+          formatted_address,
+          place_id, 
+          rating, 
+          types,
+          name,
+        } = direction
+        
+        response.push({
+          name, 
+          international_phone_number,
+          formatted_address,
+          types,
+          business_status,
+          place_id,
+          rating,
+          openOnRangeTime,
+          openNow
+        });
+      }
     });
 
-    console.log(response, isOpen);
     return response
   }
 }
