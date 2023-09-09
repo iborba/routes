@@ -99,10 +99,16 @@ export class TourStops {
     let openOnRangeTime
 
     directions?.map(direction => {
-      openOnRangeTime = direction.opening_hours?.periods.some(x => 
-        (x.open?.day === weekDay && x.close?.day === weekDay) && 
-        checktime(parseFloat(x.open?.time ?? ''), parseFloat(x.close?.time ?? ''), availableUserRangeTime)
-      )
+      const periods  = direction.opening_hours?.periods;
+
+      if (periods?.length === 1 && periods[0].open.day === 0 && periods[0].open.time === '0000') {
+        openOnRangeTime = true
+      } else {
+        openOnRangeTime = periods?.some(period => 
+          (period.open?.day === weekDay && period.close?.day === weekDay) && 
+          checktime(parseFloat(period.open?.time ?? ''), parseFloat(period.close?.time ?? ''), availableUserRangeTime)
+        )
+      }
       
       if (openOnRangeTime) {
         const openNow = direction.opening_hours?.open_now

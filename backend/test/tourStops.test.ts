@@ -11,10 +11,10 @@ describe('routes file', () => {
   let stopOver2: [number, number] 
 
   beforeAll(() => {
-    start = [-29.926422591896756, -51.18272191718709]
-    stopOver1 = [-29.919997241552743, -51.177464787626995]
-    stopOver2 = [-29.914678113869336, -51.17686397283068]
-    end = [-29.918872065155803, -51.1554063005354]
+    start = [41.90091724453351, 12.483328727167306] // Trevi
+    stopOver1 = [41.891187160778465, 12.492155403494806] // Coloseo
+    stopOver2 = [41.90289326191632, 12.453325781806354] // Vatican
+    end = [41.88253979255042, 12.432179657081749] // hotel
   })
 
   test('gets the linear distance from A to B', () => {
@@ -40,7 +40,7 @@ describe('routes file', () => {
     expect(rows[0].elements[0].distance.value).toBeGreaterThan(2500)
   })
 
-  test.only('fetch all directions to all points mentioned', async () => {
+  test('fetch all directions to all points mentioned', async () => {
     const posStart: IPosition = { lat: start[0], lng: start[1] };
     const posEnd: IPosition = { lat: end[0], lng: end[1] };
     const stopOvers: IPosition[] = [
@@ -66,6 +66,6 @@ describe('routes file', () => {
 
     const response = await toursStops.fetchItineraryOnRange(posStart, posEnd, stopOvers, desiredWeekDay, availableUserRangeTime)
 
-    expect(response).toHaveLength(1)
+    expect(response).toHaveLength(4)
   })
 })
