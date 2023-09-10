@@ -6,6 +6,7 @@ import {
   DirectionsRequest,
   PlaceDetailsRequest
 } from '@googlemaps/google-maps-services-js'
+import { readFileSync } from 'fs';
 
 export enum EUnit {
   KM = 'quilometer',
@@ -19,6 +20,8 @@ export enum EMode {
   bicycling = "bicycling",
   transit = "transit"
 }
+
+export const weekDays = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 export class TourStops {
   private apiKey = process.env.API_KEY ?? '';
   
@@ -90,6 +93,18 @@ export class TourStops {
     return await Promise.all(placesPromises)
   }
 
+  getPopularTimesAndTimeWait(placeId: string, weekDay: number) {
+    const file = readFileSync('./test/mock/popularTime.json').toString();
+    const apiResponse = JSON.parse(file)
+    const placeInfo = apiResponse.find((x: any) => x.id === placeId);
+    const day = weekDays[weekDay];
+    const popularTimes = placeInfo.populartimes?.find((x: any) => x.name.toLowerCase() === day)?.data;
+    const timeWait = placeInfo.time_wait?.find((x: any) => x.name.toLowerCase() === day)?.data;
+    const response = { id: placeInfo.id, day, popularTimes, timeWait }
+    
+    return response
+  }
+
   async fetchItineraryOnRange(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
     const directions = await this.fetchDirections(start, end, stopOver);
     const response: any[] = [];
@@ -122,6 +137,7 @@ export class TourStops {
           name,
         } = direction
         
+        const {popularTimes, timeWait} = this.getPopularTimesAndTimeWait(direction.place_id ?? '', weekDay)
         response.push({
           name, 
           international_phone_number,
@@ -131,11 +147,14 @@ export class TourStops {
           place_id,
           rating,
           openOnRangeTime,
-          openNow
+          openNow,
+          popularTimes,
+          timeWait
         });
       }
     });
 
+    console.log(response)
     return response
   }
 }
