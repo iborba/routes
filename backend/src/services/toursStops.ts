@@ -99,10 +99,19 @@ export class TourStops {
     const placeInfo = apiResponse.find((x: any) => x.id === placeId);
     const day = weekDays[weekDay];
     const popularTimes = placeInfo.populartimes?.find((x: any) => x.name.toLowerCase() === day)?.data;
-    const timeWait = placeInfo.time_wait?.find((x: any) => x.name.toLowerCase() === day)?.data;
-    const response = { id: placeInfo.id, day, popularTimes, timeWait }
+    //const timeWait = placeInfo.time_wait?.find((x: any) => x.name.toLowerCase() === day)?.data;
+    const response = { id: placeInfo.id, day, popularTimes }
     
     return response
+  }
+
+  getPopularTimesInsideUserTimeRange(popularTimes: [], availableUserRangeTime: IOpenHours[]) {
+    return availableUserRangeTime.map(x => {
+      const startTime = Math.floor(x.from / 100);
+      const endTime = Math.floor(x.to / 100);
+
+      return popularTimes.slice(startTime, endTime)
+    })
   }
 
   async fetchItineraryOnRange(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
@@ -137,7 +146,9 @@ export class TourStops {
           name,
         } = direction
         
-        const {popularTimes, timeWait} = this.getPopularTimesAndTimeWait(direction.place_id ?? '', weekDay)
+        const { popularTimes } = this.getPopularTimesAndTimeWait(direction.place_id ?? '', weekDay)
+        const onRangePopularTimes = this.getPopularTimesInsideUserTimeRange(popularTimes, availableUserRangeTime)[0]
+
         response.push({
           name, 
           international_phone_number,
@@ -149,12 +160,11 @@ export class TourStops {
           openOnRangeTime,
           openNow,
           popularTimes,
-          timeWait
+          onRangePopularTimes
         });
       }
     });
 
-    console.log(response)
     return response
   }
 }

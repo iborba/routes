@@ -65,7 +65,7 @@ describe('routes file', () => {
     const toursStops = new TourStops()
 
     const response = await toursStops.fetchItineraryOnRange(posStart, posEnd, stopOvers, desiredWeekDay, availableUserRangeTime)
-
+console.log(response)
     expect(response).toHaveLength(4)
   })
 })
