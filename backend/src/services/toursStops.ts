@@ -149,6 +149,8 @@ export class TourStops {
         const { popularTimes } = this.getPopularTimesAndTimeWait(direction.place_id ?? '', weekDay)
         const onRangePopularTimes = this.getPopularTimesInsideUserTimeRange(popularTimes, availableUserRangeTime)[0]
 
+        // const distanceFromYouToPoint = TO DO
+
         response.push({
           name, 
           international_phone_number,
@@ -160,7 +162,7 @@ export class TourStops {
           openOnRangeTime,
           openNow,
           popularTimes,
-          onRangePopularTimes
+          onRangePopularTimes,
         });
       }
     });
