@@ -17,20 +17,11 @@ describe('routes file', () => {
     end = [41.88253979255042, 12.432179657081749] // hotel
   })
 
-  test('gets the linear distance from A to B', () => {
-    const start: IPosition = { lat: -29.000, lng: 29.000 }
-    const end: IPosition = { lat: -29.999, lng: 29.000 }
-    const toursStops = new TourStops()
-    const result = Math.floor(toursStops.fetchLinearDistance(start, end))
-    
-    expect(result).toEqual(111)
-  })
-
   test('gets the distance and complementary info from A to B points', async () => {
-    const start: IPosition[] = [{ lat: -29.914371295744683, lng: -51.16139731730591 }]
-    const end: IPosition[] = [{ lat: -29.93014717581828, lng: -51.15973775437772 }];
-    const toursStops = new TourStops()
-    const result = await toursStops.fetchDistance(start, end)
+    const start: IPosition = { lat: -29.914371295744683, lng: -51.16139731730591 };
+    const end: IPosition = { lat: -29.93014717581828, lng: -51.15973775437772 };
+    const toursStops = new TourStops(start, end, [], -1, [])
+    const result = await toursStops.fetchDistance()
 
     const { destination_addresses, origin_addresses, rows } = result
 
@@ -46,9 +37,9 @@ describe('routes file', () => {
     const stopOvers: IPosition[] = [
       { lat: stopOver1[0], lng: stopOver1[1] }, 
       { lat: stopOver2[0], lng: stopOver2[1] }]
-    const toursStops = new TourStops()
+    const toursStops = new TourStops(posStart, posEnd, stopOvers, -1, []) // :O
 
-    const result = await toursStops.fetchDirections(posStart, posEnd, stopOvers)
+    const result = await toursStops.fetchDirections()
 
     expect(result).toHaveLength(4)
   })
@@ -62,10 +53,12 @@ describe('routes file', () => {
     const availableUserRangeTime: IOpenHours[] = [{from: 900, to: 1700}]
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const desiredWeekDay = weekdays.indexOf('Sun');
-    const toursStops = new TourStops()
+    const toursStops = new TourStops(posStart, posEnd, stopOvers, desiredWeekDay, availableUserRangeTime)
 
-    const response = await toursStops.fetchItineraryOnRange(posStart, posEnd, stopOvers, desiredWeekDay, availableUserRangeTime)
-console.log(response)
+    const response = await toursStops.fetchItineraryOnRange()
+
+    console.log(response)
+
     expect(response).toHaveLength(4)
   })
 })

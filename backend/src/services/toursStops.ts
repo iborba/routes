@@ -4,7 +4,8 @@ import {
   Client as GoogleMapsClient,
   DistanceMatrixRequest ,
   DirectionsRequest,
-  PlaceDetailsRequest
+  PlaceDetailsRequest,
+  OpeningPeriod
 } from '@googlemaps/google-maps-services-js'
 import { readFileSync } from 'fs';
 
@@ -22,40 +23,30 @@ export enum EMode {
 }
 
 export const weekDays = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+
 export class TourStops {
+  start: IPosition;
+  end: IPosition;
+  stopOver: IPosition[];
+  weekDay: number;
+  availableUserRangeTime: IOpenHours[];
+
+  constructor(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
+    this.start = start;
+    this.end = end;
+    this.stopOver = stopOver;
+    this.weekDay = weekDay;
+    this.availableUserRangeTime = availableUserRangeTime;
+  }
   private apiKey = process.env.API_KEY ?? '';
   
-  fetchLinearDistance(start: IPosition, end: IPosition, unit: EUnit = EUnit.KM) {
-    const radLat1 = Math.PI * start.lat / 180;
-    const radLat2 = Math.PI * end.lat / 180;
-
-    const theta = start.lng - end.lng;
-    const radTheta = Math.PI * theta / 180;
-
-    let dist = (Math.sin(radLat1) * Math.sin(radLat2)) 
-      + (Math.cos(radLat1)*Math.cos(radLat2)*Math.cos(radTheta));
-
-    dist = dist > 1 ? 1 : dist;
-    dist = Math.acos(dist)
-    dist *= 180 / Math.PI
-    dist *= 60 * 1.1515
-
-    if (unit === EUnit.KM) { 
-      dist *= 1.609344
-    } else if (unit === EUnit.N) {
-      dist *= 0.8684
-    }
-
-    return dist;
-  }
-
-  async fetchDistance(start: IPosition[], end: IPosition[], mode: EMode = EMode.driving) {
+  async fetchDistance(mode: EMode = EMode.driving) {
     const maps = new GoogleMapsClient({})
     const req: DistanceMatrixRequest = {
       params: {
         key: this.apiKey,
-        origins: start,
-        destinations: end,
+        origins: [this.start],
+        destinations: [this.end],
         // mode: mode
       }
     }
@@ -64,15 +55,15 @@ export class TourStops {
     return result?.data
   }
 
-  async fetchDirections(start: IPosition, end: IPosition, stopOver: IPosition[]) {
+  async fetchDirections() {
     const maps = new GoogleMapsClient({})
     const req: DirectionsRequest = {
       params: {
         key: this.apiKey,
-        origin: start,
-        destination: end,
+        origin: this.start,
+        destination: this.end,
         alternatives: true,
-        waypoints: stopOver,
+        waypoints: this.stopOver,
       }
     }
     const result = await maps.directions(req)
@@ -122,25 +113,37 @@ export class TourStops {
     return response;
   }
 
-  async fetchItineraryOnRange(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
-    const directions = await this.fetchDirections(start, end, stopOver);
-    const response: any[] = [];
-    const checktime = (timeFrom: number, timeTo: number, userAvailableTimeRange: IOpenHours[]) => {
-      return userAvailableTimeRange.some(({to}) => timeFrom <= to && to <= timeTo)
-    };
-    let openOnRangeTime
+  placeIsOpen(periods: OpeningPeriod[]) {
+    if (!periods) {
+      return false;
+    }
 
+    return periods.some(period => {
+      const { day: openDay, time: openTime } = period.open;
+      const is24HoursOpened = openDay === 0 && openTime === '0000';
+
+      if (!period.close || is24HoursOpened) {
+        return true;
+      }
+
+      const { day: closeDay, time: closeTime } = period.close;
+      
+      return ((openDay === this.weekDay && closeDay === this.weekDay) && 
+        (this.availableUserRangeTime.some(({to}) => parseFloat(openTime ?? '') <= to && to <= parseFloat(closeTime ?? ''))));
+    })
+  }
+
+  async fetchItineraryOnRange() {
+    const directions = await this.fetchDirections();
+    const response: any[] = [];
+    
     directions?.map(async direction => {
       const periods  = direction.opening_hours?.periods;
-
-      if (periods?.length === 1 && periods[0].open.day === 0 && periods[0].open.time === '0000') {
-        openOnRangeTime = true
-      } else {
-        openOnRangeTime = periods?.some(period => 
-          (period.open?.day === weekDay && period.close?.day === weekDay) && 
-          checktime(parseFloat(period.open?.time ?? ''), parseFloat(period.close?.time ?? ''), availableUserRangeTime)
-        )
+      if (!periods) {
+        return []
       }
+
+      const openOnRangeTime = this.placeIsOpen(periods)
       
       if (openOnRangeTime) {
         const openNow = direction.opening_hours?.open_now
@@ -154,9 +157,9 @@ export class TourStops {
           name,
         } = direction
         
-        const { popularTimes } = this.getPopularTimesAndTimeWait(direction.place_id ?? '', weekDay)
-        const onRangePopularTimes = this.getPopularTimesInsideUserTimeRange(popularTimes, availableUserRangeTime)[0]
-        const { minimum, recommended } = await this.getSuggestedTimeOnEachPlace(direction.place_id ?? '');
+        const { popularTimes } = this.getPopularTimesAndTimeWait(place_id ?? '', this.weekDay)
+        const onRangePopularTimes = this.getPopularTimesInsideUserTimeRange(popularTimes, this.availableUserRangeTime)[0]
+        const { minimum, recommended } = await this.getSuggestedTimeOnEachPlace(place_id ?? '');
 
         // const distanceFromYouToPoint = TO DO
 
