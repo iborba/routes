@@ -162,18 +162,18 @@ export class TourStops {
         const { minimum, recommended } = await this.getSuggestedTimeOnEachPlace(place_id ?? '');
 
         // const distanceFromYouToPoint = TO DO
+        // if (this.start.isHotel || this.end.isHotel) = DO NOT COUNT ON METRICS
 
         response.push({
+          place_id,
           name, 
           international_phone_number,
           formatted_address,
           types,
           business_status,
-          place_id,
           rating,
           openOnRangeTime,
           openNow,
-          popularTimes,
           onRangePopularTimes,
           timePerPlace: { minimum, recommended }
         });

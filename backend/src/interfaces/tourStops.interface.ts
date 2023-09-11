@@ -1,6 +1,7 @@
 export interface IPosition {
   lat: number;
   lng: number;
+  isHotel: boolean;
 }
 
 export interface IOpenHours {

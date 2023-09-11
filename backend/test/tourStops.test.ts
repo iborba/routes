@@ -18,8 +18,8 @@ describe('routes file', () => {
   })
 
   test('gets the distance and complementary info from A to B points', async () => {
-    const start: IPosition = { lat: -29.914371295744683, lng: -51.16139731730591 };
-    const end: IPosition = { lat: -29.93014717581828, lng: -51.15973775437772 };
+    const start: IPosition = { lat: -29.914371295744683, lng: -51.16139731730591, isHotel: false };
+    const end: IPosition = { lat: -29.93014717581828, lng: -51.15973775437772, isHotel: false };
     const toursStops = new TourStops(start, end, [], -1, [])
     const result = await toursStops.fetchDistance()
 
@@ -32,11 +32,11 @@ describe('routes file', () => {
   })
 
   test('fetch all directions to all points mentioned', async () => {
-    const posStart: IPosition = { lat: start[0], lng: start[1] };
-    const posEnd: IPosition = { lat: end[0], lng: end[1] };
+    const posStart: IPosition = { lat: start[0], lng: start[1], isHotel: false };
+    const posEnd: IPosition = { lat: end[0], lng: end[1], isHotel: false };
     const stopOvers: IPosition[] = [
-      { lat: stopOver1[0], lng: stopOver1[1] }, 
-      { lat: stopOver2[0], lng: stopOver2[1] }]
+      { lat: stopOver1[0], lng: stopOver1[1], isHotel: false }, 
+      { lat: stopOver2[0], lng: stopOver2[1], isHotel: false }]
     const toursStops = new TourStops(posStart, posEnd, stopOvers, -1, []) // :O
 
     const result = await toursStops.fetchDirections()
@@ -45,11 +45,11 @@ describe('routes file', () => {
   })
 
   test.only('must ensure opening hours is between a provided time range', async () => {
-    const posStart: IPosition = { lat: start[0], lng: start[1] };
-    const posEnd: IPosition = { lat: end[0], lng: end[1] };
+    const posStart: IPosition = { lat: start[0], lng: start[1], isHotel: false };
+    const posEnd: IPosition = { lat: end[0], lng: end[1], isHotel: true };
     const stopOvers: IPosition[] = [
-      { lat: stopOver1[0], lng: stopOver1[1] }, 
-      { lat: stopOver2[0], lng: stopOver2[1] }]
+      { lat: stopOver1[0], lng: stopOver1[1], isHotel: false }, 
+      { lat: stopOver2[0], lng: stopOver2[1], isHotel: false }]
     const availableUserRangeTime: IOpenHours[] = [{from: 900, to: 1700}]
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     const desiredWeekDay = weekdays.indexOf('Sun');
