@@ -60,8 +60,8 @@ export class TourStops {
     const req: DirectionsRequest = {
       params: {
         key: this.apiKey,
-        origin: this.start,
-        destination: this.end,
+        origin: { lat: this.start.lat, lng: this.start.lng },
+        destination: { lat: this.end.lat, lng: this.end.lng },
         alternatives: true,
         waypoints: this.stopOver,
       }
@@ -133,11 +133,31 @@ export class TourStops {
     })
   }
 
+  suggestItinerary(responses: any[]) {
+    let accumulatedRange: any = []
+    let accumulatedTime = {minimum: 0, recommended: 0}
+
+    responses.map(response => {
+      const { onRangePopularTimes, timePerPlace } = response
+      accumulatedTime.minimum += timePerPlace.minimum
+      accumulatedTime.recommended += timePerPlace.recommended
+      
+      // onRangePopularTimes.map((value: number, ix: number) => {
+      //   if (accumulatedRange.length === ix) {
+      //     accumulatedRange.push(value)
+      //   } else {
+      //     accumulatedRange[ix] += value
+      //   }
+      // })
+    })
+    console.log(accumulatedRange,accumulatedTime)
+  }
+
   async fetchItineraryOnRange() {
     const directions = await this.fetchDirections();
     const response: any[] = [];
     
-    directions?.map(async direction => {
+    await directions?.map(async direction => {
       const periods  = direction.opening_hours?.periods;
       if (!periods) {
         return []
@@ -156,13 +176,17 @@ export class TourStops {
           types,
           name,
         } = direction
-        
-        const { popularTimes } = this.getPopularTimesAndTimeWait(place_id ?? '', this.weekDay)
-        const onRangePopularTimes = this.getPopularTimesInsideUserTimeRange(popularTimes, this.availableUserRangeTime)[0]
-        const { minimum, recommended } = await this.getSuggestedTimeOnEachPlace(place_id ?? '');
 
-        // const distanceFromYouToPoint = TO DO
-        // if (this.start.isHotel || this.end.isHotel) = DO NOT COUNT ON METRICS
+        if (!place_id) {
+          return []
+        }
+
+        const { popularTimes } = this.getPopularTimesAndTimeWait(place_id, this.weekDay)
+        const onRangePopularTimes = this.getPopularTimesInsideUserTimeRange(popularTimes, this.availableUserRangeTime)[0]
+        const { minimum, recommended } = await this.getSuggestedTimeOnEachPlace(place_id);
+
+        // TO DO: distanceFromYouToPoint
+        // TO DO: validate if point is the hotel and ignore it on the itinerary calculation
 
         response.push({
           place_id,
@@ -179,6 +203,8 @@ export class TourStops {
         });
       }
     });
+
+    const itinerary = this.suggestItinerary(response)
 
     return response
   }

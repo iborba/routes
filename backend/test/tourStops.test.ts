@@ -57,7 +57,7 @@ describe('routes file', () => {
 
     const response = await toursStops.fetchItineraryOnRange()
 
-    console.log(response)
+    // console.log(response)
 
     expect(response).toHaveLength(4)
   })
