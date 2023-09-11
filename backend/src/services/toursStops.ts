@@ -114,6 +114,14 @@ export class TourStops {
     })
   }
 
+  async getSuggestedTimeOnEachPlace(placeId: string) {
+    const file = readFileSync('./test/mock/suggestedTime.json').toString();
+    const apiResponse = JSON.parse(file);
+    const response = apiResponse.find((x: any) => x.id === placeId);
+
+    return response;
+  }
+
   async fetchItineraryOnRange(start: IPosition, end: IPosition, stopOver: IPosition[], weekDay: number, availableUserRangeTime: IOpenHours[]) {
     const directions = await this.fetchDirections(start, end, stopOver);
     const response: any[] = [];
@@ -122,7 +130,7 @@ export class TourStops {
     };
     let openOnRangeTime
 
-    directions?.map(direction => {
+    directions?.map(async direction => {
       const periods  = direction.opening_hours?.periods;
 
       if (periods?.length === 1 && periods[0].open.day === 0 && periods[0].open.time === '0000') {
@@ -148,6 +156,7 @@ export class TourStops {
         
         const { popularTimes } = this.getPopularTimesAndTimeWait(direction.place_id ?? '', weekDay)
         const onRangePopularTimes = this.getPopularTimesInsideUserTimeRange(popularTimes, availableUserRangeTime)[0]
+        const { minimum, recommended } = await this.getSuggestedTimeOnEachPlace(direction.place_id ?? '');
 
         // const distanceFromYouToPoint = TO DO
 
@@ -163,6 +172,7 @@ export class TourStops {
           openNow,
           popularTimes,
           onRangePopularTimes,
+          timePerPlace: { minimum, recommended }
         });
       }
     });

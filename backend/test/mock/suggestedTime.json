@@ -1,0 +1,22 @@
+[
+  {
+    "id": "ChIJ1UCDJ1NgLxMRtrsCzOHxdvY",
+    "minimum": 15,
+    "recommended": 45
+  },
+  {
+    "id": "ChIJ550O1fhhLxMRYx93efw2jhM",
+    "minimum": 60,
+    "recommended": 240
+  },
+  {
+    "id": "ChIJLcLetmVgLxMRcRTXeCCw6xw",
+    "minimum": 60,
+    "recommended": 240
+  },
+  {
+    "id": "ChIJ34aDpadfLxMRr5yoE4hZT0U",
+    "minimum": 0,
+    "recommended": 0
+  }
+]
